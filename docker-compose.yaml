@@ -1,0 +1,32 @@
+version: "3.8"
+services:
+  avatar-maker:
+    platform: linux/amd64
+    build: .
+    image: docker.io/fourcobas/avatar-maker:latest
+    ports:
+      - 8080:8080
+
+x-elbv2:
+  public-alb:
+    Properties:
+      Scheme: internet-facing
+      Type: application
+
+    Listeners:
+      - Port: 80
+        Protocol: HTTP
+        Targets:
+          - name: avatar-maker:avatar-maker
+            access: /
+    MacroParameters:
+      Ingress:
+        ExtSources:
+          - IPv4: "0.0.0.0/0"
+            Description: ANY
+
+    Services:
+      - name: avatar-maker:avatar-maker
+        port: 8080
+        protocol: HTTP
+        healthcheck: 8080:HTTP:/
